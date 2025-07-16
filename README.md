@@ -1,5 +1,9 @@
 # 塩尻レインボーシーカープロジェクト
 
+<div align="center">
+  <img src="assets/images/ShiojiriRainbowSeekerTop.jpg" alt="塩尻レインボーシーカー" width="100%" max-width="800px">
+</div>
+
 ## 概要
 塩尻市大門近辺で虹を見かけたらアプリから撮影してシステムに投稿し、近隣ユーザーに虹の出現をプッシュ通知するシステムです。気象データを蓄積し、機械学習により虹の出現を予測します。
 
