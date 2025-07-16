@@ -1,0 +1,31 @@
+{
+  "name": "shiojiri-rainbow-seeker",
+  "version": "1.0.0",
+  "description": "塩尻レインボーシーカープロジェクト - 虹の目撃情報を共有し、機械学習で虹の出現を予測するシステム",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm run dev",
+    "backend:install": "cd backend && npm install",
+    "frontend:install": "cd frontend && npm install",
+    "mobile:install": "cd mobile && npm install",
+    "ml:install": "cd ml-system && pip install -r requirements.txt",
+    "install-all": "npm run backend:install && npm run frontend:install && npm run mobile:install && npm run ml:install",
+    "build": "npm run frontend:build && npm run backend:build",
+    "test": "npm run backend:test && npm run frontend:test"
+  },
+  "keywords": [
+    "rainbow",
+    "weather",
+    "prediction",
+    "machine-learning",
+    "mobile-app",
+    "shiojiri"
+  ],
+  "author": "Shiojiri Rainbow Seeker Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
