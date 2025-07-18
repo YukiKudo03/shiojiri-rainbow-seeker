@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shiojiri-rainbow-seeker
+  labels:
+    app: shiojiri-rainbow-seeker
+    environment: production

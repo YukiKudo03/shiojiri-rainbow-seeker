@@ -1,0 +1,185 @@
+# Prometheus Alert Rules
+groups:
+  - name: application.rules
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: (100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 80% for more than 5 minutes"
+
+      # High Disk Usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"} * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage is above 80% for more than 5 minutes"
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute"
+
+      # High HTTP Error Rate
+      - alert: HighHTTPErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "HTTP error rate is above 5% for more than 5 minutes"
+
+      # High Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 1 second for more than 5 minutes"
+
+      # Database Connection Issues
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "Database connections are above 80 for more than 5 minutes"
+
+      # Redis Memory Usage
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is above 80% for more than 5 minutes"
+
+      # ML Model Prediction Failure
+      - alert: MLModelPredictionFailure
+        expr: increase(ml_prediction_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ML model prediction failures"
+          description: "ML model has failed more than 10 predictions in the last 5 minutes"
+
+      # Low Rainbow Sighting Activity
+      - alert: LowRainbowActivity
+        expr: increase(rainbow_sightings_total[1h]) < 1
+        for: 6h
+        labels:
+          severity: info
+        annotations:
+          summary: "Low rainbow sighting activity"
+          description: "No rainbow sightings in the last 6 hours"
+
+      # High Queue Length
+      - alert: HighQueueLength
+        expr: notification_queue_length > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High notification queue length"
+          description: "Notification queue length is above 1000 for more than 5 minutes"
+
+      # Certificate Expiry
+      - alert: CertificateExpiry
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate will expire within 7 days"
+
+      # Backup Failure
+      - alert: BackupFailure
+        expr: time() - backup_last_success_timestamp > 86400 * 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup failure detected"
+          description: "Database backup has not succeeded for more than 2 days"
+
+  - name: kubernetes.rules
+    rules:
+      # Pod Restart
+      - alert: PodRestart
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod {{ $labels.pod }} restarted"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted"
+
+      # Pod CrashLoopBackOff
+      - alert: PodCrashLoopBackOff
+        expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod {{ $labels.pod }} in CrashLoopBackOff"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in CrashLoopBackOff state"
+
+      # Node Not Ready
+      - alert: NodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.node }} not ready"
+          description: "Node {{ $labels.node }} has been not ready for more than 5 minutes"
+
+      # High Pod Memory Usage
+      - alert: HighPodMemoryUsage
+        expr: container_memory_usage_bytes{pod!=""} / container_spec_memory_limit_bytes{pod!=""} * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage in pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} memory usage is above 80% for more than 5 minutes"
+
+      # High Pod CPU Usage
+      - alert: HighPodCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{pod!=""}[5m]) / container_spec_cpu_limit * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage in pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} CPU usage is above 80% for more than 5 minutes"

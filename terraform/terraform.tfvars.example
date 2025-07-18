@@ -1,0 +1,16 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and update the values
+
+# Project Configuration
+project_name = "shiojiri-rainbow-seeker"
+environment  = "production"
+
+# AWS Configuration
+region = "ap-northeast-1"  # Tokyo region
+
+# GCP Configuration
+gcp_project = "your-gcp-project-id"
+gcp_region  = "asia-northeast1"  # Tokyo region
+
+# Domain Configuration
+domain_name = "shiojiri-rainbow-seeker.com"

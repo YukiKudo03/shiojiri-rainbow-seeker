@@ -1,0 +1,315 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Shiojiri Rainbow Seeker - Application Dashboard",
+    "tags": ["shiojiri", "rainbow", "application"],
+    "timezone": "Asia/Tokyo",
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{status}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "requests/sec"
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "seconds"
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Rainbow Sightings",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(rainbow_sightings_total[1h])",
+            "legendFormat": "Sightings per hour"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "count"
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "ML Predictions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(ml_predictions_total[5m])",
+            "legendFormat": "Predictions"
+          },
+          {
+            "expr": "increase(ml_prediction_errors_total[5m])",
+            "legendFormat": "Errors"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "count"
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends",
+            "legendFormat": "Active connections"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "connections"
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Redis Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes",
+            "legendFormat": "Memory used"
+          },
+          {
+            "expr": "redis_memory_max_bytes",
+            "legendFormat": "Memory max"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "bytes"
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "percent",
+            "max": 100,
+            "min": 0
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 8,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+            "legendFormat": "Memory Usage %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "percent",
+            "max": 100,
+            "min": 0
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 9,
+        "title": "Error Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "valueName": "current",
+        "format": "percent",
+        "thresholds": "1,5",
+        "colorBackground": true,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 10,
+        "title": "Active Users",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "count(increase(user_login_total[1h]) > 0)",
+            "legendFormat": "Active Users"
+          }
+        ],
+        "valueName": "current",
+        "format": "short",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 32
+        }
+      },
+      {
+        "id": 11,
+        "title": "Notification Queue",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "notification_queue_length",
+            "legendFormat": "Queue Length"
+          }
+        ],
+        "valueName": "current",
+        "format": "short",
+        "thresholds": "100,1000",
+        "colorBackground": true,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 32
+        }
+      },
+      {
+        "id": 12,
+        "title": "Uptime",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "up",
+            "legendFormat": "Service Up"
+          }
+        ],
+        "valueName": "current",
+        "format": "short",
+        "thresholds": "0.5,0.9",
+        "colorBackground": true,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 32
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "schemaVersion": 16,
+    "version": 1
+  }
+}

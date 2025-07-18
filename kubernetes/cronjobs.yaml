@@ -1,0 +1,209 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: database-backup
+    component: backup
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM JST
+  timezone: "Asia/Tokyo"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: postgres:15-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache gzip curl
+              
+              # Create backup
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/tmp/backup_${TIMESTAMP}.sql.gz"
+              
+              echo "Creating database backup..."
+              pg_dump -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME --verbose --clean --no-owner --no-privileges | gzip > $BACKUP_FILE
+              
+              # Verify backup
+              if ! gzip -t $BACKUP_FILE; then
+                echo "Backup verification failed"
+                exit 1
+              fi
+              
+              echo "Backup created successfully: $BACKUP_FILE"
+              
+              # Send notification
+              if [ -n "$SLACK_WEBHOOK_URL" ]; then
+                FILE_SIZE=$(du -h $BACKUP_FILE | cut -f1)
+                curl -X POST -H 'Content-type: application/json' \
+                  --data "{\"text\":\"✅ Database backup completed successfully. File size: $FILE_SIZE\"}" \
+                  "$SLACK_WEBHOOK_URL"
+              fi
+            envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_PASSWORD
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /tmp
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: shiojiri-rainbow-seeker
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup-logs
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: cleanup-logs
+    component: maintenance
+spec:
+  schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM JST
+  timezone: "Asia/Tokyo"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup
+            image: busybox:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Cleaning up old log files..."
+              
+              # Remove log files older than 30 days
+              find /var/log -name "*.log" -type f -mtime +30 -delete
+              find /var/log -name "*.log.*" -type f -mtime +30 -delete
+              
+              # Remove empty directories
+              find /var/log -type d -empty -delete
+              
+              echo "Log cleanup completed"
+            volumeMounts:
+            - name: log-storage
+              mountPath: /var/log
+          volumes:
+          - name: log-storage
+            persistentVolumeClaim:
+              claimName: logs-pvc
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ml-model-retrain
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: ml-model-retrain
+    component: ml
+spec:
+  schedule: "0 4 * * 1"  # Weekly on Monday at 4 AM JST
+  timezone: "Asia/Tokyo"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: retrain
+            image: ghcr.io/yukikudo03/shiojiri-rainbow-seeker-ml-system:latest
+            command:
+            - python
+            - app.py
+            - train
+            - --save
+            - --days
+            - "30"
+            envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+            resources:
+              requests:
+                cpu: 1000m
+                memory: 2Gi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+            volumeMounts:
+            - name: ml-models
+              mountPath: /app/models
+            - name: ml-logs
+              mountPath: /app/logs
+          volumes:
+          - name: ml-models
+            persistentVolumeClaim:
+              claimName: ml-models-pvc
+          - name: ml-logs
+            persistentVolumeClaim:
+              claimName: ml-logs-pvc
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: weather-data-sync
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: weather-data-sync
+    component: sync
+spec:
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  timezone: "Asia/Tokyo"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: sync
+            image: curlimages/curl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Syncing weather data..."
+              
+              # Call weather sync endpoint
+              curl -X POST -H "Content-Type: application/json" \
+                -d '{"action": "sync_weather_data"}' \
+                "http://backend-service:3000/api/weather/sync"
+              
+              echo "Weather data sync completed"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

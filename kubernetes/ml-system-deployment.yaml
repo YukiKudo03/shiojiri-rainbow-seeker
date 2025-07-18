@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-system
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: ml-system
+    component: ai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-system
+  template:
+    metadata:
+      labels:
+        app: ml-system
+        component: ai
+    spec:
+      containers:
+      - name: ml-system
+        image: ghcr.io/yukikudo03/shiojiri-rainbow-seeker-ml-system:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: PORT
+          value: "5000"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 10
+          failureThreshold: 3
+        volumeMounts:
+        - name: ml-models
+          mountPath: /app/models
+        - name: ml-logs
+          mountPath: /app/logs
+      volumes:
+      - name: ml-models
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+      - name: ml-logs
+        persistentVolumeClaim:
+          claimName: ml-logs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-system-service
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: ml-system
+spec:
+  selector:
+    app: ml-system
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-models-pvc
+  namespace: shiojiri-rainbow-seeker
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-logs-pvc
+  namespace: shiojiri-rainbow-seeker
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard
