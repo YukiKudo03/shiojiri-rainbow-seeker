@@ -146,6 +146,59 @@ Content-Type: application/json
     "name": "山田太郎",
     "email": "yamada@example.com",
     "role": "user",
+    "verified": true,
+    "location": {
+      "latitude": 36.2048,
+      "longitude": 138.2529
+    },
+    "notification_preferences": {
+      "push": true,
+      "email": false,
+      "radius": 5000
+    },
+    "stats": {
+      "rainbow_sightings": 15,
+      "total_contributions": 42,
+      "member_since": "2024-01-15T10:30:00Z"
+    },
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2025-07-20T10:30:00Z"
+  },
+  "timestamp": "2025-07-20T10:30:00Z"
+}
+```
+
+#### `PUT /auth/me`
+ユーザープロフィール更新
+
+**認証:** 必須
+
+**リクエスト:**
+```json
+{
+  "name": "山田次郎",
+  "location": {
+    "latitude": 36.2048,
+    "longitude": 138.2529
+  },
+  "notification_preferences": {
+    "push": true,
+    "email": true,
+    "radius": 10000
+  }
+}
+```
+
+**レスポンス:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "山田次郎",
+    "email": "yamada@example.com",
+    "role": "user",
+    "verified": true,
     "location": {
       "latitude": 36.2048,
       "longitude": 138.2529
