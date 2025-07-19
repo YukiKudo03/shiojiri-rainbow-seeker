@@ -13,7 +13,10 @@ import sys
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from model_training.feature_engineering import FeatureEngineer
+try:
+    from model_training.feature_engineering import FeatureEngineer
+except ImportError:
+    from src.model_training.feature_engineering import FeatureEngineer
 
 
 @pytest.fixture

@@ -7,16 +7,15 @@ const mockNotificationService = {
   sendRainbowAlert: jest.fn(),
 };
 
-jest.mock('../src/services/notificationService', () => mockNotificationService);
-
-const app = require('../src/server');
-
 // Mock Notification model
 const mockNotificationModel = {
   findByUserId: jest.fn(),
 };
 
+jest.mock('../src/services/notificationService', () => mockNotificationService);
 jest.mock('../src/models/Notification', () => mockNotificationModel);
+
+const app = require('../src/server');
 
 describe('Notification API', () => {
   let authToken;

@@ -13,7 +13,11 @@ import sys
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from data_processing.data_loader import DataLoader
+try:
+    from data_processing.data_loader import DataLoader
+except ImportError:
+    # Try alternative import path
+    from src.data_processing.data_loader import DataLoader
 
 
 @pytest.fixture

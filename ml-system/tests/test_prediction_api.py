@@ -12,8 +12,12 @@ from unittest.mock import Mock, patch, MagicMock
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from prediction.api import create_app
-from prediction.predictor import prediction_service
+try:
+    from prediction.api import create_app
+    from prediction.predictor import prediction_service
+except ImportError:
+    from src.prediction.api import create_app
+    from src.prediction.predictor import prediction_service
 
 
 @pytest.fixture

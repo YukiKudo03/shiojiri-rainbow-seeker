@@ -7,16 +7,15 @@ const mockWeatherService = {
   getRainbowPrediction: jest.fn(),
 };
 
-jest.mock('../src/services/weatherService', () => mockWeatherService);
-
-const app = require('../src/server');
-
 // Mock Weather model
 const mockWeatherModel = {
   findByDate: jest.fn(),
 };
 
+jest.mock('../src/services/weatherService', () => mockWeatherService);
 jest.mock('../src/models/Weather', () => mockWeatherModel);
+
+const app = require('../src/server');
 
 describe('Weather API', () => {
   beforeEach(() => {

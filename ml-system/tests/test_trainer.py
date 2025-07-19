@@ -14,7 +14,10 @@ import sys
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from model_training.trainer import RainbowPredictor
+try:
+    from model_training.trainer import RainbowPredictor
+except ImportError:
+    from src.model_training.trainer import RainbowPredictor
 
 
 @pytest.fixture

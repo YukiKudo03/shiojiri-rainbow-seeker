@@ -1,9 +1,48 @@
 const request = require('supertest');
-const app = require('../src/server');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Mock User model
+const mockUser = {
+  findByEmail: jest.fn(),
+  create: jest.fn(),
+  findById: jest.fn(),
+  update: jest.fn(),
+};
+
+// Mock bcrypt
+jest.mock('bcryptjs', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+}));
+
+// Mock User model
+jest.mock('../src/models/User', () => mockUser);
+
+const app = require('../src/server');
+
 describe('Authentication API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Default mock implementations
+    mockUser.findByEmail.mockResolvedValue(null); // User doesn't exist by default
+    mockUser.create.mockResolvedValue({
+      id: 1,
+      name: 'Test User',
+      email: 'testuser@example.com',
+      created_at: new Date()
+    });
+    mockUser.findById.mockResolvedValue({
+      id: 1,
+      name: 'Test User',
+      email: 'testuser@example.com'
+    });
+    
+    bcrypt.hash.mockResolvedValue('hashedpassword123');
+    bcrypt.compare.mockResolvedValue(true);
+  });
+
   describe('POST /api/auth/register', () => {
     const validUserData = {
       name: 'Test User',
@@ -69,6 +108,11 @@ describe('Authentication API', () => {
     });
 
     it('should prevent duplicate email registration', async () => {
+      // Mock user already exists for second call
+      mockUser.findByEmail
+        .mockResolvedValueOnce(null) // First call - no user
+        .mockResolvedValueOnce({ id: 1, email: validUserData.email }); // Second call - user exists
+
       // First registration
       await request(app)
         .post('/api/auth/register')
@@ -81,7 +125,7 @@ describe('Authentication API', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('already exists');
+      expect(response.body.error.message).toContain('already exists');
     });
 
     it('should hash password before storing', async () => {
@@ -105,14 +149,16 @@ describe('Authentication API', () => {
       password: 'LoginTest123!'
     };
 
-    beforeAll(async () => {
-      // Create test user for login tests
-      await request(app)
-        .post('/api/auth/register')
-        .send(testUser);
-    });
-
     it('should login with valid credentials', async () => {
+      // Mock finding user with correct password
+      mockUser.findByEmail.mockResolvedValueOnce({
+        id: 1,
+        email: testUser.email,
+        password: 'hashedpassword123',
+        name: testUser.name
+      });
+      bcrypt.compare.mockResolvedValueOnce(true);
+
       const loginData = {
         email: testUser.email,
         password: testUser.password
