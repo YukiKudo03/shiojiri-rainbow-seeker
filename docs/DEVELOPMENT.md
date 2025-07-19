@@ -1,46 +1,141 @@
-# 開発環境セットアップガイド
+# 🛠️ 塩尻レインボーシーカー開発ガイド
 
-## 概要
-塩尻レインボーシーカープロジェクトの開発環境構築手順です。
+[![Development Status](https://img.shields.io/badge/Development-Active-brightgreen.svg)](docs/DEVELOPMENT.md)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![Python Version](https://img.shields.io/badge/python-%3E%3D3.9.0-blue)](https://python.org/)
+[![Docker](https://img.shields.io/badge/docker-%3E%3D20.10-blue)](https://docker.com/)
 
-## 必要なソフトウェア
+## 📋 概要
+塩尻レインボーシーカープロジェクトの**エンタープライズグレード開発環境**構築・運用ガイドです。本格的なプロダクション品質の開発を支援します。
 
-### 基本要件
-- **Node.js**: 18.x 以上
-- **npm**: 9.x 以上
-- **Python**: 3.9 以上
-- **PostgreSQL**: 15.x 以上
-- **Redis**: 6.x 以上
-- **Git**: 2.x 以上
+## ⚡ クイックスタート
 
-### 開発ツール
-- **Docker**: 20.10 以上
-- **Docker Compose**: 2.0 以上
-- **Visual Studio Code** (推奨)
-- **Postman** (API テスト用)
-
-## 環境構築
-
-### 1. リポジトリクローン
+### 🐳 Docker環境（推奨）
 ```bash
-# リポジトリクローン
-git clone https://github.com/your-org/shiojiri-rainbow-seeker.git
+# 1. リポジトリクローン
+git clone https://github.com/YukiKudo03/shiojiri-rainbow-seeker.git
 cd shiojiri-rainbow-seeker
 
-# 開発ブランチ作成
-git checkout -b feature/your-feature-name
-```
-
-### 2. 環境変数設定
-```bash
-# 環境変数ファイル作成
+# 2. 環境変数設定
 cp .env.example .env
 
-# 各サービスディレクトリでも設定
+# 3. 開発環境起動（ワンコマンド）
+docker-compose -f docker-compose.dev.yml up -d
+
+# 4. データベース初期化
+npm run db:migrate && npm run db:seed
+
+# 🎉 開発サーバー起動完了！
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:3001  
+# ML API: http://localhost:5000
+# Grafana: http://localhost:3002
+# pgAdmin: http://localhost:5050
+```
+
+## 🛠️ 必要なソフトウェア
+
+### 📦 基本要件
+| ソフトウェア | バージョン | 必須 | 説明 |
+|------------|----------|------|------|
+| **Node.js** | 18.x+ | ✅ | JavaScript ランタイム |
+| **npm** | 9.x+ | ✅ | パッケージマネージャー |
+| **Python** | 3.9+ | ✅ | ML システム用 |
+| **PostgreSQL** | 15.x+ | ✅ | メインデータベース（PostGIS拡張） |
+| **Redis** | 7.x+ | ✅ | キャッシュ・セッション管理 |
+| **Git** | 2.x+ | ✅ | バージョン管理 |
+
+### 🔧 開発ツール
+| ツール | バージョン | 用途 | 設定 |
+|--------|----------|------|------|
+| **Docker** | 20.10+ | コンテナ化 | [設定ガイド](#docker-setup) |
+| **Docker Compose** | 2.0+ | 複数サービス管理 | 開発用設定済み |
+| **Visual Studio Code** | 最新 | 推奨IDE | [拡張機能](#vscode-setup) |
+| **Postman** | 最新 | API テスト | [Collection](#api-testing) |
+| **pgAdmin** | 4.x+ | DB管理GUI | ポート5050 |
+| **Grafana** | 9.x+ | 監視ダッシュボード | ポート3002 |
+
+### 📱 モバイル開発（オプション）
+| ツール | 説明 |
+|--------|------|
+| **Android Studio** | Android開発・エミュレーター |
+| **Xcode** | iOS開発・シミュレーター（macOS） |
+| **Expo CLI** | React Native開発支援 |
+
+## 🚀 環境構築
+
+### 1️⃣ リポジトリクローン
+```bash
+# 📥 リポジトリクローン
+git clone https://github.com/YukiKudo03/shiojiri-rainbow-seeker.git
+cd shiojiri-rainbow-seeker
+
+# 🌿 開発ブランチ作成
+git checkout -b feature/your-feature-name
+
+# 📊 プロジェクト構造確認
+tree -L 2 -I 'node_modules|.git'
+```
+
+**期待されるプロジェクト構造:**
+```
+shiojiri-rainbow-seeker/
+├── 📂 backend/          # Node.js API サーバー
+├── 📂 frontend/         # React Web 管理画面
+├── 📂 mobile/           # React Native アプリ
+├── 📂 ml-system/        # Python ML システム
+├── 📂 terraform/        # インフラ定義（IaC）
+├── 📂 kubernetes/       # K8s デプロイメント
+├── 📂 monitoring/       # Prometheus/Grafana
+├── 📂 scripts/          # 運用スクリプト
+├── 📂 docs/             # ドキュメント
+├── 🐳 docker-compose.yml     # 本番環境
+├── 🐳 docker-compose.dev.yml # 開発環境
+└── 📋 package.json      # ルートパッケージ管理
+```
+
+### 2️⃣ 環境変数設定
+```bash
+# 🔧 メイン環境変数ファイル作成
+cp .env.example .env
+
+# 📝 各サービス固有の環境変数設定
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp frontend/.env.example frontend/.env  
 cp mobile/.env.example mobile/.env
 cp ml-system/.env.example ml-system/.env
+
+# ✏️ 環境変数編集（重要な設定項目）
+nano .env
+```
+
+**🔑 重要な環境変数設定項目:**
+```bash
+# データベース設定
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=shiojiri_rainbow_dev
+DB_USER=shiojiri_user
+DB_PASSWORD=secure_password
+
+# Redis設定
+REDIS_URL=redis://localhost:6379
+
+# JWT認証
+JWT_SECRET=your-super-secure-jwt-secret-256-bit
+JWT_EXPIRES_IN=24h
+
+# 外部API設定
+WEATHER_API_KEY=your-weather-api-key
+GOOGLE_MAPS_API_KEY=your-google-maps-key
+
+# ML システム設定
+ML_MODEL_PATH=./models/rainbow_predictor.pkl
+ML_API_URL=http://localhost:5000
+
+# 開発環境設定
+NODE_ENV=development
+LOG_LEVEL=debug
 ```
 
 ### 3. 依存関係インストール

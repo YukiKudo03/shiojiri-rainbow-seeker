@@ -1,8 +1,27 @@
-# 塩尻レインボーシーカー チュートリアル
+# 🌈 塩尻レインボーシーカー 完全チュートリアル
 
-## 🌈 はじめに
+[![User Guide](https://img.shields.io/badge/Guide-User%20Friendly-brightgreen.svg)](docs/TUTORIAL.md)
+[![Mobile Support](https://img.shields.io/badge/Platform-iOS%20%26%20Android-blue.svg)](docs/TUTORIAL.md)
+[![Web Support](https://img.shields.io/badge/Platform-Web%20App-purple.svg)](docs/TUTORIAL.md)
 
-このチュートリアルでは、塩尻レインボーシーカーアプリの使い方を、実際の画面を使いながら分かりやすく説明します。
+## 🎯 はじめに
+
+**塩尻レインボーシーカー**の完全ガイドです。初心者から上級者まで、アプリを最大限活用するための**ステップバイステップ解説**を提供します。
+
+### 🚀 このチュートリアルで学べること
+- ✅ **アプリの基本操作** - インストールから初回投稿まで
+- ✅ **高度な機能活用** - AIによる虹予測・分析機能
+- ✅ **コミュニティ参加** - 他ユーザーとの交流方法
+- ✅ **プライバシー設定** - 安全で快適な利用方法
+- ✅ **トラブル解決** - よくある問題の対処法
+
+### 📱 サポートプラットフォーム
+| プラットフォーム | 対応状況 | 推奨バージョン |
+|-----------------|---------|---------------|
+| **📱 iOS** | ✅ 対応済み | iOS 14.0+ |
+| **🤖 Android** | ✅ 対応済み | Android 8.0+ |
+| **🌐 Web** | ✅ 対応済み | Chrome, Safari, Firefox |
+| **💻 Desktop** | 🔄 近日対応 | Windows, macOS, Linux |
 
 ## 📱 アプリのダウンロード・インストール
 

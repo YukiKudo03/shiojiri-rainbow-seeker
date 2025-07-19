@@ -1,35 +1,72 @@
-# API 仕様書
+# 🌈 Shiojiri Rainbow Seeker API 仕様書
 
-## 概要
-塩尻レインボーシーカープロジェクトのREST API仕様です。
+[![API Version](https://img.shields.io/badge/API-v1.0.0-blue.svg)](docs/API.md)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.3-green.svg)](docs/openapi.yaml)
 
-## ベースURL
-```
-開発環境: http://localhost:3000/api
-本番環境: https://api.shiojiri-rainbow-seeker.com/api
-```
+## 📋 概要
+塩尻レインボーシーカープロジェクトのRESTful API仕様書です。エンタープライズグレードのセキュリティ、パフォーマンス、可用性を提供します。
 
-## 認証
-JWTトークンベースの認証を使用します。
+## 🌐 ベースURL
 
-### ヘッダー
+| 環境 | URL | 説明 |
+|------|-----|------|
+| **開発環境** | `http://localhost:3001/api` | ローカル開発用 |
+| **ステージング** | `https://staging-api.shiojiri-rainbow-seeker.com/api` | テスト環境 |
+| **本番環境** | `https://api.shiojiri-rainbow-seeker.com/api` | プロダクション環境 |
+
+## 🔐 認証・認可
+
+### JWT認証
 ```http
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 ```
 
+### API キー認証（管理者用）
+```http
+X-API-Key: <API_KEY>
+Content-Type: application/json
+```
+
+### OAuth 2.0（外部連携用）
+```http
+Authorization: Bearer <OAUTH_TOKEN>
+Content-Type: application/json
+```
+
+### セキュリティ仕様
+- **トークン有効期限**: 24時間
+- **リフレッシュトークン**: 30日間
+- **暗号化**: AES-256
+- **ハッシュ**: bcrypt (12rounds)
+- **CORS**: オリジン制限あり
+
 ## エンドポイント
 
-### 認証 (Authentication)
+---
 
-#### POST /auth/login
-ユーザーログイン
+## 📚 API エンドポイント
+
+### 🔐 認証・ユーザー管理
+
+#### `POST /auth/register` 
+新規ユーザー登録
 
 **リクエスト:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "name": "山田太郎",
+  "email": "yamada@example.com",
+  "password": "SecurePass123!",
+  "location": {
+    "latitude": 36.2048,
+    "longitude": 138.2529
+  },
+  "notification_preferences": {
+    "push": true,
+    "email": false,
+    "radius": 5000
+  }
 }
 ```
 
@@ -37,15 +74,102 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "山田太郎",
+      "email": "yamada@example.com",
+      "role": "user",
+      "verified": false,
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "rt_abc123...",
+    "expires_in": 86400
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+#### `POST /auth/login`
+ユーザーログイン
+
+**リクエスト:**
+```json
+{
+  "email": "yamada@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+**レスポンス:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "山田太郎",
+      "email": "yamada@example.com",
+      "role": "user",
+      "last_login": "2024-01-15T10:30:00Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "rt_abc123...",
+    "expires_in": 86400
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+#### `POST /auth/refresh`
+トークンリフレッシュ
+
+**リクエスト:**
+```json
+{
+  "refresh_token": "rt_abc123..."
+}
+```
+
+#### `GET /auth/me`
+ユーザープロフィール取得
+
+**認証:** 必須
+
+**レスポンス:**
+```json
+{
+  "success": true,
+  "data": {
     "id": 1,
-    "email": "user@example.com",
-    "username": "user",
-    "role": "user"
+    "name": "山田太郎",
+    "email": "yamada@example.com",
+    "role": "user",
+    "location": {
+      "latitude": 36.2048,
+      "longitude": 138.2529
+    },
+    "notification_preferences": {
+      "push": true,
+      "email": false,
+      "radius": 5000
+    },
+    "statistics": {
+      "total_sightings": 15,
+      "verified_sightings": 12,
+      "accuracy_rate": 0.87
+    },
+    "created_at": "2024-01-01T10:00:00Z",
+    "last_login": "2024-01-15T10:30:00Z"
   }
 }
 ```
+
+#### `PUT /auth/me`
+ユーザープロフィール更新
+
+**認証:** 必須
 
 #### POST /auth/register
 新規ユーザー登録
@@ -87,17 +211,27 @@ Content-Type: application/json
 }
 ```
 
-### 虹目撃情報 (Sightings)
+---
 
-#### GET /sightings
+### 🌈 虹目撃情報管理
+
+#### `GET /rainbow`
 虹目撃情報一覧取得
 
 **クエリパラメータ:**
-- `page` (optional): ページ番号 (default: 1)
-- `limit` (optional): 1ページあたりの件数 (default: 10)
-- `location` (optional): 位置情報でフィルタ
-- `date_from` (optional): 日付範囲開始
-- `date_to` (optional): 日付範囲終了
+| パラメータ | 型 | 必須 | デフォルト | 説明 |
+|------------|---|------|------------|------|
+| `page` | integer | ❌ | 1 | ページ番号 |
+| `limit` | integer | ❌ | 10 | 1ページあたりの件数 (最大100) |
+| `lat` | float | ❌ | - | 緯度（位置フィルタ用） |
+| `lng` | float | ❌ | - | 経度（位置フィルタ用） |
+| `radius` | integer | ❌ | 5000 | 検索半径（メートル） |
+| `intensity_min` | integer | ❌ | 1 | 最小強度 (1-10) |
+| `intensity_max` | integer | ❌ | 10 | 最大強度 (1-10) |
+| `date_from` | string | ❌ | - | 開始日時 (ISO8601) |
+| `date_to` | string | ❌ | - | 終了日時 (ISO8601) |
+| `verified` | boolean | ❌ | - | 検証済みのみ |
+| `sort` | string | ❌ | `created_at_desc` | ソート順 |
 
 **レスポンス:**
 ```json
