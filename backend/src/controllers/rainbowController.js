@@ -144,6 +144,14 @@ exports.deleteRainbow = async (req, res, next) => {
 // Get nearby rainbow sightings
 exports.getNearbyRainbows = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Validation failed', details: errors.array() }
+      });
+    }
+
     const { latitude, longitude } = req.params;
     const radius = req.query.radius || 10; // Default 10km radius
 

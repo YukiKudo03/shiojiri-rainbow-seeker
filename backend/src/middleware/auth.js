@@ -8,6 +8,7 @@ const auth = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
+        message: 'No token provided',
         error: { message: 'No token provided' }
       });
     }
@@ -18,6 +19,7 @@ const auth = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
+        message: 'Token is not valid',
         error: { message: 'Token is not valid' }
       });
     }
@@ -27,6 +29,7 @@ const auth = async (req, res, next) => {
   } catch (error) {
     res.status(401).json({
       success: false,
+      message: 'Token is not valid',
       error: { message: 'Token is not valid' }
     });
   }

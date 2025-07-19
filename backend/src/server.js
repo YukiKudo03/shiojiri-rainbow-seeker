@@ -23,6 +23,9 @@ const notFoundHandler = require('./middleware/notFoundHandler');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Skip middleware setup in test environment for faster tests
+const isTestEnvironment = process.env.NODE_ENV === 'test';
+
 // Enhanced rate limiting with security logging
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -81,8 +84,10 @@ app.use(metricsMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting
-app.use(limiter);
+// Rate limiting (skip in test environment)
+if (!isTestEnvironment) {
+  app.use(limiter);
+}
 
 // Health check endpoint (before cache middleware)
 app.get('/health', (req, res) => {
@@ -98,9 +103,11 @@ app.get('/health', (req, res) => {
 // Metrics endpoint
 app.get('/metrics', metricsEndpoint);
 
-// Cache middleware for API routes
-app.use('/api/weather', cacheMiddleware(300, 'weather')); // 5 minutes cache
-app.use('/api/rainbow', cacheMiddleware(60, 'rainbow')); // 1 minute cache for dynamic data
+// Cache middleware for API routes (skip in test environment)
+if (!isTestEnvironment) {
+  app.use('/api/weather', cacheMiddleware(300, 'weather')); // 5 minutes cache
+  app.use('/api/rainbow', cacheMiddleware(60, 'rainbow')); // 1 minute cache for dynamic data
+}
 
 // API routes
 app.use('/api/rainbow', rainbowRoutes);
@@ -115,12 +122,15 @@ app.use(errorHandler);
 // Start server
 // Initialize Redis and start server
 const startServer = async () => {
-  try {
-    // Initialize Redis connection
-    await initializeRedis();
-    logger.info('Redis initialized successfully');
-  } catch (error) {
-    logger.warn('Redis initialization failed, continuing without cache', { error: error.message });
+  // Skip Redis initialization in test environment
+  if (!isTestEnvironment) {
+    try {
+      // Initialize Redis connection
+      await initializeRedis();
+      logger.info('Redis initialized successfully');
+    } catch (error) {
+      logger.warn('Redis initialization failed, continuing without cache', { error: error.message });
+    }
   }
 
   // Only start server if not in test environment

@@ -1,44 +1,52 @@
-// Test setup file
-process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test-secret';
-process.env.DB_HOST = 'localhost';
-process.env.DB_PORT = '5432';
-process.env.DB_NAME = 'test_db';
-process.env.DB_USER = 'test_user';
-process.env.DB_PASSWORD = 'test_password';
-process.env.FIREBASE_PROJECT_ID = 'test-project';
-process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
-process.env.FIREBASE_PRIVATE_KEY = 'test-key';
-process.env.WEATHER_API_KEY = 'test-weather-key';
+const MockPool = require('./mock-database');
 
-// Mock database module
-const mockDatabase = {
-  query: jest.fn(),
-  connect: jest.fn(),
-  end: jest.fn(),
-};
+// Use mock database for testing
+const mockPool = new MockPool();
 
-jest.mock('../src/config/database', () => mockDatabase);
+// Override the database module
+jest.doMock('../src/config/database', () => mockPool);
 
-// Mock console methods to reduce noise in tests
-global.console = {
-  ...console,
-  log: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  info: jest.fn(),
-};
+// Test database setup and teardown
+beforeAll(async () => {
+  // Setup mock database
+  try {
+    // Create mock tables
+    await mockPool.query(`CREATE TABLE IF NOT EXISTS users`);
+    await mockPool.query(`CREATE TABLE IF NOT EXISTS user_locations`);
+    await mockPool.query(`CREATE TABLE IF NOT EXISTS rainbow_sightings`);
+    await mockPool.query(`CREATE OR REPLACE FUNCTION calculate_distance`);
 
-// Global test setup
-beforeAll(() => {
-  // Reset database mock to default successful responses
-  mockDatabase.query.mockResolvedValue({ rows: [], rowCount: 0 });
+    console.log('✅ Mock database setup completed');
+  } catch (error) {
+    console.error('❌ Mock database setup failed:', error);
+    throw error;
+  }
 });
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  // Reset database mock for each test
-  mockDatabase.query.mockResolvedValue({ rows: [], rowCount: 0 });
+beforeEach(async () => {
+  // Clean up test data before each test
+  try {
+    await mockPool.query('DELETE FROM rainbow_sightings');
+    await mockPool.query('DELETE FROM user_locations');
+    await mockPool.query('DELETE FROM users');
+    
+    // Reset sequences
+    await mockPool.query('ALTER SEQUENCE users_id_seq RESTART WITH 1');
+    await mockPool.query('ALTER SEQUENCE rainbow_sightings_id_seq RESTART WITH 1');
+    await mockPool.query('ALTER SEQUENCE user_locations_id_seq RESTART WITH 1');
+  } catch (error) {
+    console.error('❌ Test cleanup failed:', error);
+  }
 });
 
-module.exports = { mockDatabase };
+afterAll(async () => {
+  // Close database connection after all tests
+  try {
+    await mockPool.end();
+    console.log('✅ Mock database connection closed');
+  } catch (error) {
+    console.error('❌ Error closing mock database connection:', error);
+  }
+});
+
+module.exports = mockPool;

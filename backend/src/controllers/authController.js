@@ -4,8 +4,12 @@ const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 
 // Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const generateToken = (user) => {
+  return jwt.sign({ 
+    id: user.id,
+    userId: user.id,
+    email: user.email
+  }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   });
 };
@@ -17,6 +21,8 @@ exports.register = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
+        message: 'Validation failed',
+        errors: errors.array(),
         error: { message: 'Validation failed', details: errors.array() }
       });
     }
@@ -43,7 +49,7 @@ exports.register = async (req, res, next) => {
     });
 
     // Generate token
-    const token = generateToken(user.id);
+    const token = generateToken(user);
 
     res.status(201).json({
       success: true,
@@ -68,6 +74,8 @@ exports.login = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
+        message: 'Validation failed',
+        errors: errors.array(),
         error: { message: 'Validation failed', details: errors.array() }
       });
     }
@@ -79,6 +87,7 @@ exports.login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
+        message: 'Invalid credentials',
         error: { message: 'Invalid credentials' }
       });
     }
@@ -88,12 +97,13 @@ exports.login = async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
+        message: 'Invalid credentials',
         error: { message: 'Invalid credentials' }
       });
     }
 
     // Generate token
-    const token = generateToken(user.id);
+    const token = generateToken(user);
 
     res.json({
       success: true,
@@ -144,14 +154,25 @@ exports.updateMe = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
+        message: 'Validation failed',
+        errors: errors.array(),
         error: { message: 'Validation failed', details: errors.array() }
       });
     }
 
-    const updates = req.body;
+    // Filter out sensitive fields that should not be updated
+    const { password, id, created_at, updated_at, ...allowedUpdates } = req.body;
     const userId = req.user.id;
 
-    const updatedUser = await User.update(userId, updates);
+    const updatedUser = await User.update(userId, allowedUpdates);
+    
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+        error: { message: 'User not found' }
+      });
+    }
     
     res.json({
       success: true,
@@ -173,6 +194,8 @@ exports.forgotPassword = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
+        message: 'Validation failed',
+        errors: errors.array(),
         error: { message: 'Validation failed', details: errors.array() }
       });
     }
@@ -206,6 +229,8 @@ exports.resetPassword = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
+        message: 'Validation failed',
+        errors: errors.array(),
         error: { message: 'Validation failed', details: errors.array() }
       });
     }

@@ -1,4 +1,32 @@
 const request = require('supertest');
+
+// Mock User model for authentication
+const mockUser = {
+  findByEmail: jest.fn(),
+  create: jest.fn(),
+  findById: jest.fn(),
+  update: jest.fn(),
+};
+
+// Mock Rainbow model
+const mockRainbow = {
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  findNearby: jest.fn(),
+};
+
+// Mock bcrypt
+jest.mock('bcryptjs', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+}));
+
+jest.mock('../src/models/User', () => mockUser);
+jest.mock('../src/models/Rainbow', () => mockRainbow);
+
 const app = require('../src/server');
 
 describe('Rainbow API', () => {
@@ -6,6 +34,63 @@ describe('Rainbow API', () => {
   let userId;
 
   beforeAll(async () => {
+    // Setup mocks
+    const bcrypt = require('bcryptjs');
+    
+    // Mock User methods
+    mockUser.findByEmail.mockResolvedValue(null); // User doesn't exist by default
+    mockUser.create.mockResolvedValue({
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
+      created_at: new Date()
+    });
+    mockUser.findById.mockResolvedValue({
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com'
+    });
+    
+    // Mock Rainbow methods
+    mockRainbow.findAll.mockResolvedValue([]);
+    mockRainbow.findNearby.mockResolvedValue([]);
+    mockRainbow.create.mockResolvedValue({
+      id: 1,
+      user_id: 1,
+      latitude: 36.1127,
+      longitude: 137.9545,
+      description: 'Beautiful rainbow after rain',
+      created_at: new Date()
+    });
+    mockRainbow.findById.mockImplementation((id) => {
+      if (id === '1' || id === 1) {
+        return Promise.resolve({
+          id: 1,
+          userId: 1,
+          latitude: 36.1127,
+          longitude: 137.9545,
+          description: 'Beautiful rainbow after rain',
+          created_at: new Date()
+        });
+      }
+      return Promise.resolve(null);
+    });
+    mockRainbow.update.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      latitude: 36.1127,
+      longitude: 137.9545,
+      description: 'Updated description',
+      created_at: new Date()
+    });
+    mockRainbow.delete.mockResolvedValue(true);
+    
+    bcrypt.hash.mockResolvedValue('hashedpassword123');
+    bcrypt.compare.mockResolvedValue(true);
+    
+    // Wait for server to be ready
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Create test user and get auth token
     const userData = {
       name: 'Test User',
@@ -17,8 +102,70 @@ describe('Rainbow API', () => {
       .post('/api/auth/register')
       .send(userData);
 
-    authToken = registerResponse.body.data.token;
-    userId = registerResponse.body.data.user.id;
+    if (registerResponse.body?.data?.token) {
+      authToken = registerResponse.body.data.token;
+      userId = registerResponse.body.data.user.id;
+    } else {
+      throw new Error('Failed to get auth token from registration response');
+    }
+  });
+
+  beforeEach(() => {
+    // Reset mocks but keep the same resolved values
+    jest.clearAllMocks();
+    
+    const bcrypt = require('bcryptjs');
+    
+    // Re-setup User mocks for each test
+    mockUser.findByEmail.mockResolvedValue(null);
+    mockUser.create.mockResolvedValue({
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
+      created_at: new Date()
+    });
+    mockUser.findById.mockResolvedValue({
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com'
+    });
+    
+    // Re-setup Rainbow mocks
+    mockRainbow.findAll.mockResolvedValue([]);
+    mockRainbow.findNearby.mockResolvedValue([]);
+    mockRainbow.create.mockResolvedValue({
+      id: 1,
+      user_id: 1,
+      latitude: 36.1127,
+      longitude: 137.9545,
+      description: 'Beautiful rainbow after rain',
+      created_at: new Date()
+    });
+    mockRainbow.findById.mockImplementation((id) => {
+      if (id === '1' || id === 1) {
+        return Promise.resolve({
+          id: 1,
+          userId: 1,
+          latitude: 36.1127,
+          longitude: 137.9545,
+          description: 'Beautiful rainbow after rain',
+          created_at: new Date()
+        });
+      }
+      return Promise.resolve(null);
+    });
+    mockRainbow.update.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      latitude: 36.1127,
+      longitude: 137.9545,
+      description: 'Updated description',
+      created_at: new Date()
+    });
+    mockRainbow.delete.mockResolvedValue(true);
+    
+    bcrypt.hash.mockResolvedValue('hashedpassword123');
+    bcrypt.compare.mockResolvedValue(true);
   });
 
   describe('POST /api/rainbow', () => {

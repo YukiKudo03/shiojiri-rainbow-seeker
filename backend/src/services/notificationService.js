@@ -10,7 +10,18 @@ class NotificationService {
   // Initialize Firebase Admin SDK
   initializeFirebase() {
     try {
+      // Skip Firebase initialization in test environment
+      if (process.env.NODE_ENV === 'test') {
+        return;
+      }
+
       if (!admin.apps.length) {
+        // Check if Firebase credentials are available
+        if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL) {
+          console.warn('Firebase credentials not configured, skipping initialization');
+          return;
+        }
+
         admin.initializeApp({
           credential: admin.credential.cert({
             type: process.env.FIREBASE_TYPE,
