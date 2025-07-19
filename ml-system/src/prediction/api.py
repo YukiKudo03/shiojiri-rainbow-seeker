@@ -5,6 +5,8 @@ Flask API for rainbow prediction service
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import time
+import psutil
 from datetime import datetime, timedelta
 import json
 from typing import Dict, Any
@@ -16,6 +18,56 @@ from ..utils.config import config
 from ..utils.logger import get_api_logger
 
 logger = get_api_logger()
+
+# Metrics collection
+class MLMetrics:
+    def __init__(self):
+        self.start_time = time.time()
+        self.request_count = 0
+        self.prediction_count = 0
+        self.training_count = 0
+        self.error_count = 0
+        self.response_times = []
+        self.model_accuracy = None
+        
+    def record_request(self, duration):
+        self.request_count += 1
+        self.response_times.append(duration)
+        # Keep only last 100 response times
+        if len(self.response_times) > 100:
+            self.response_times.pop(0)
+    
+    def record_prediction(self):
+        self.prediction_count += 1
+    
+    def record_training(self):
+        self.training_count += 1
+    
+    def record_error(self):
+        self.error_count += 1
+    
+    def get_metrics(self):
+        uptime = time.time() - self.start_time
+        avg_response_time = sum(self.response_times) / len(self.response_times) if self.response_times else 0
+        
+        return {
+            'uptime_seconds': int(uptime),
+            'request_count': self.request_count,
+            'prediction_count': self.prediction_count,
+            'training_count': self.training_count,
+            'error_count': self.error_count,
+            'error_rate': (self.error_count / max(self.request_count, 1)) * 100,
+            'avg_response_time_ms': round(avg_response_time * 1000, 2),
+            'model_accuracy': self.model_accuracy,
+            'system': {
+                'cpu_percent': psutil.cpu_percent(),
+                'memory_percent': psutil.virtual_memory().percent,
+                'disk_percent': psutil.disk_usage('/').percent
+            },
+            'timestamp': datetime.utcnow().isoformat()
+        }
+
+ml_metrics = MLMetrics()
 
 # Create Flask app
 app = Flask(__name__)

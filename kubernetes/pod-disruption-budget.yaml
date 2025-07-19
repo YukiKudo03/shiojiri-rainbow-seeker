@@ -1,0 +1,73 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend-pdb
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: backend
+    component: api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: backend
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend-pdb
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: frontend
+    component: web
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: frontend
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ml-system-pdb
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: ml-system
+    component: prediction
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ml-system
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-pdb
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: postgres
+    component: database
+spec:
+  maxUnavailable: 0  # Critical database should not be disrupted
+  selector:
+    matchLabels:
+      app: postgres
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  namespace: shiojiri-rainbow-seeker
+  labels:
+    app: redis
+    component: cache
+spec:
+  maxUnavailable: 0  # Cache should remain available
+  selector:
+    matchLabels:
+      app: redis

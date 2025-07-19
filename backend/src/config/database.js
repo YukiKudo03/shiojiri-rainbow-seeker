@@ -6,9 +6,15 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'shiojiri_rainbow',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
-  max: 20,
+  max: 25, // Increased for better concurrency
+  min: 2, // Minimum connections to maintain
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000, // Increased timeout
+  acquireTimeoutMillis: 60000, // New: timeout for acquiring connection
+  statement_timeout: 30000, // New: query timeout
+  query_timeout: 30000, // Query timeout
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
 });
 
 // Test database connection
