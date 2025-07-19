@@ -38,13 +38,13 @@ const Analytics = () => {
     { refetchInterval: 300000 }
   );
 
-  const { data: rainbowStats } = useQuery(
+  const { data: rainbowStatsData } = useQuery(
     ['rainbowStats', period],
     () => apiService.getRainbowStats({ days: period }),
     { refetchInterval: 300000 }
   );
 
-  const { data: userStats } = useQuery(
+  const { data: userStatsData } = useQuery(
     ['userStats', period],
     () => apiService.getUserStats({ days: period }),
     { refetchInterval: 300000 }

@@ -1,14 +1,44 @@
 import apiClient from './authService';
 
 export const apiService = {
+  // Authentication APIs
+  login: async (credentials) => {
+    const response = await apiClient.post('/auth/login', credentials);
+    return response.data;
+  },
+
+  register: async (userData) => {
+    const response = await apiClient.post('/auth/register', userData);
+    return response.data;
+  },
+
+  getUserProfile: async () => {
+    const response = await apiClient.get('/auth/me');
+    return response.data;
+  },
+
   // Rainbow APIs
   getRainbows: async (params = {}) => {
     const response = await apiClient.get('/rainbow', { params });
     return response.data;
   },
 
-  getRainbow: async (id) => {
+  getRainbowById: async (id) => {
     const response = await apiClient.get(`/rainbow/${id}`);
+    return response.data;
+  },
+
+  createRainbow: async (data, file) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+      formData.append(key, data[key]);
+    });
+    if (file) {
+      formData.append('image', file);
+    }
+    const response = await apiClient.post('/rainbow', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data;
   },
 
@@ -17,8 +47,8 @@ export const apiService = {
     return response.data;
   },
 
-  getNearbyRainbows: async (lat, lon, radius = 10) => {
-    const response = await apiClient.get(`/rainbow/nearby/${lat}/${lon}?radius=${radius}`);
+  getNearbyRainbows: async (lat, lon, distance = 10) => {
+    const response = await apiClient.get(`/rainbow/nearby/${lat}/${lon}?distance=${distance}`);
     return response.data;
   },
 
@@ -46,6 +76,11 @@ export const apiService = {
   // Weather APIs
   getCurrentWeather: async (lat, lon) => {
     const response = await apiClient.get(`/weather/current?lat=${lat}&lon=${lon}`);
+    return response.data;
+  },
+
+  getWeatherForecast: async (lat, lon, days = 7) => {
+    const response = await apiClient.get(`/weather/forecast?lat=${lat}&lon=${lon}&days=${days}`);
     return response.data;
   },
 
